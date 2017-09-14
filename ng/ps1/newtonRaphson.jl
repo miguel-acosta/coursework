@@ -36,7 +36,7 @@ function newtonRaphson(f, x0, tol=1e-4, maxiter=1e3)
     end
     if diff <= tol
         stopReason = "Tolerance satisfied."
-    elseif iter == maxiter
+    elseif iter >= maxiter
         stopReason = "Maximum number of iterations achieved"
     else
         stopReason = "This is not doing what you want it to, Miguel."
