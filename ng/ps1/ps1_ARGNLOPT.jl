@@ -1,4 +1,4 @@
-using StatsBase, Distributions, PyPlot, Optim
+using StatsBase, Distributions, PyPlot, NLopt
 srand(6413)
 #------------------------------------------------------------------------------#
 #----------------------------------- Q1.a -------------------------------------#
@@ -52,7 +52,7 @@ g(μ,σ2) = 1/N * [sum(x-μ), sum((x-μ).^2 - σ2),sum((x-μ).^3),
 J(theta) = g(theta[1],theta[2]).' * g(theta[1],theta[2])
 
 θhat,exitStatus = newtonRaphson(J, [0.02,0.001],1e-7,1e5)
-Optim.optimize(J, [0.02,0.001], LBFGS())
+# Optim.optimize(J, [0.02,0.001])
 
 #------------------------------------------------------------------------------#
 #----------------------------------- Q2 ---------------------------------------#
@@ -99,15 +99,38 @@ function m(αθ, data)
     return(error.' * error)
 end
     
-function g!(grad, αθ, data)
+function obj_Q2i(αθ::Vector, grad::Vector,data)
     error = errorARMA(αθ, data)
-    grad[2] = -error[2:end].' * error[1:end-1]
-    grad[1] = -error[2:end].' * data[1:end-1]
+    if length(grad) > 0
+        grad[1] = -error[2:end].' * error[1:end-1]
+        grad[2] = -error[2:end].' * data[1:end-1]
+    end
+    error.' * error
 end
 
-m_obj(αθ) = m(αθ, y)
-g_obj!(grad, αθ) = g!(grad, αθ, y)
-Optim.optimize(m_obj, g_obj!, [0.5,0.5], LBFGS())
+
+#αθ_Q2i = Optim.optimize(m_Q2i,[0.8,0.5], BFGS())
+
+#obj_Q2i_data(xx,yy) = obj_Q2i(xx,yy,y)
+#opt = Opt(:LD_MMA,2)
+#lower_bounds!(opt, [-1, -1])
+#upper_bounds!(opt, [1, 1])
+#min_objective!(opt, obj_Q2i_data)
+#maxtime!(opt,60);
+#(minf, minx, ret) = optimize(opt, [0.3, 0.5])
+
+obj_Q2i_data(xx,yy) = obj_Q2i(log.(xx),yy,y)
+opt = Opt(:LD_MMA,2)
+lower_bounds!(opt, exp.([-1,-1]))
+upper_bounds!(opt, exp.([1,1]))
+min_objective!(opt, obj_Q2i_data)
+maxtime!(opt,30);
+(minf, minx, ret) = optimize(opt, exp.([0.5, 0.5]))
+
+
+println("got $minf at $minx after $count iterations (returned $ret)")
+
+asfdasfd
 
 #------------------------------------------------------------------------------#
 #----------------------------------- Q2.iii -----------------------------------#
@@ -128,15 +151,11 @@ close(f)
 
 ## CLS
 m_Q2iii(xx) = m(xx,Π)
-g_Q2iii!(grad,xx) = g!(grad, xx, Π)
-αθ_Q2iii = Optim.optimize(m_Q2iii, g_Q2iii!, [0.5, 0.5], SimulatedAnnealing(),Optim.Options(iterations = 100000))
-αθ_Q2iii = Optim.optimize(m_Q2iii, g_Q2iii!, [0.5,0.5], LBFGS())
-
-
+#αθ_Q2iii = Optim.optimize(m_Q2iii,[0.8,0.5], BFGS())
 
 ## (Optimal) GMM
 ## Need some moment conditions. Impose that e's are serially uncorrelated,
-## and that e is uncorrelated lagged y. 
+## and that y is uncorrelated with e in the same period. 
 function g(αθ,data)
     error = errorARMA(αθ,data)
     TT = length(data)
@@ -158,10 +177,8 @@ end
 
 # First, get GMM vcov matrix using identity weighting
 J(theta) = g([theta[1],theta[2]], Π).' * g([theta[1],theta[2]],Π)
-αθ_Q2iiiGMM = newtonRaphson(J, [0.5,0.5],1e-12,1e5) #
-Optim.optimize(J,[0.5,0.5], BFGS())
+αθ_Q2iiiGMM = newtonRaphson(J, [0.5,0.5],1e-12,1e5) # Optim.optimize(J,[0.9,0.7], BFGS())
 
 
 J_opt(theta) = g([theta[1],theta[2]], Π).' * inv(W_oGMM(αθ_Q2iiiGMM[1], Π)) * g([theta[1],theta[2]],Π)
-αθ_Q2iiiGMMopt = newtonRaphson(J_opt, [0.5,0.5],1e-12,1e5)
-Optim.optimize(J_opt,[0.5,0.5], BFGS(), Optim.Options(g_tol = 1e-12))
+αθ_Q2iiiGMMopt = newtonRaphson(J_opt, [0.5,0.5],1e-12,1e5) # Optim.optimize(J,[0.9,0.7], BFGS())
