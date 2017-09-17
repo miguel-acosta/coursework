@@ -3,6 +3,11 @@
  (lambda ()
    (TeX-run-style-hooks
     "latex2e"
+    "jb"
+    "nls"
+    "nls2"
+    "cls"
+    "ogmm"
     "article"
     "art10")))
 

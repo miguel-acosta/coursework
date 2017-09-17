@@ -1,4 +1,5 @@
 using StatsBase, Distributions, PyPlot, Optim
+include("textable.jl")
 srand(6413)
 #------------------------------------------------------------------------------#
 #----------------------------------- Q1.a -------------------------------------#
@@ -21,8 +22,18 @@ ku = kurtosis(x)
 # Bera-Jarque Test
 jb = (N/6)*(sk^2 + (1/4)*(ku-3)^2)
 
+
 # Internet says JB is chi-squared(2). So, what level do we reject at?
-α = 1-cdf(Chisq(2), jb)
+#α = 100*(1-cdf(Chisq(2), jb))
+α = 100*(1-cdf(Chisq(2), 0.01))
+#jbout = string("The Bera-Jarque statistic was $jb; this means "
+#             "we can reject the null at the $α\% level, since Bera-Jarque "
+#             "is distributed \$\Chi^2\_2\$"))
+#write("jb.tex", jbout)
+jbout = textable(["mean", "variance", "skewness", "kurtosis", "Bera-Jarque", "1\\% Critical Value"],
+         [mean(x), var(x), sk, ku, jb, α], ["%4.4f", "%4.4f", "%4.2f", "%4.2f", "%4.2f", "%4.2f"])
+write("jb.tex", jbout)         
+
 
 # qq-plot time...
 quants  = collect(0.01:0.01:0.99)
@@ -52,7 +63,10 @@ g(μ,σ2) = 1/N * [sum(x-μ), sum((x-μ).^2 - σ2),sum((x-μ).^3),
 J(theta) = g(theta[1],theta[2]).' * g(theta[1],theta[2])
 
 θhat,exitStatus = newtonRaphson(J, [0.02,0.001],1e-7,1e5)
-Optim.optimize(J, [0.02,0.001], LBFGS())
+θhat_Optim      = Optim.optimize(J, [0.02,0.001], LBFGS())
+nlsout = textable(["\$\\mu\$", "\$\\sigma^2\$"], [θhat  θhat_Optim.minimizer],
+                  "%4.4f")
+write("nls.tex", nlsout)         
 
 #------------------------------------------------------------------------------#
 #----------------------------------- Q2 ---------------------------------------#
@@ -107,7 +121,12 @@ end
 
 m_obj(αθ) = m(αθ, y)
 g_obj!(grad, αθ) = g!(grad, αθ, y)
-Optim.optimize(m_obj, g_obj!, [0.5,0.5], LBFGS())
+θhat_2 = Optim.optimize(m_obj, g_obj!, [0.5,0.5], LBFGS())
+sigma = var(errorARMA(θhat_2.minimizer, Π))
+append!(θhat_2.minimizer, sigma)
+nlsout = textable(["\$\\alpha\$", "\$\\theta\$", "\$\\sigma^2\$"], θhat_2.minimizer,
+                  "%4.4f")
+write("nls2.tex", nlsout)
 
 #------------------------------------------------------------------------------#
 #----------------------------------- Q2.iii -----------------------------------#
@@ -129,9 +148,18 @@ close(f)
 ## CLS
 m_Q2iii(xx) = m(xx,Π)
 g_Q2iii!(grad,xx) = g!(grad, xx, Π)
-αθ_Q2iii = Optim.optimize(m_Q2iii, g_Q2iii!, [0.5, 0.5], SimulatedAnnealing(),Optim.Options(iterations = 100000))
-αθ_Q2iii = Optim.optimize(m_Q2iii, g_Q2iii!, [0.5,0.5], LBFGS())
+αθ_Q2iii_SA = Optim.optimize(m_Q2iii, g_Q2iii!, [0.5, 0.5], SimulatedAnnealing(),Optim.Options(iterations = 100000))
+sigma_SA = var(errorARMA(αθ_Q2iii_SA.minimizer, Π))
+append!(αθ_Q2iii_SA.minimizer, sigma_SA)
 
+αθ_Q2iii = Optim.optimize(m_Q2iii, g_Q2iii!, [0.5,0.5], LBFGS())
+sigma = var(errorARMA(αθ_Q2iii.minimizer, Π))
+append!(αθ_Q2iii.minimizer, sigma)
+
+clsout = textable(["\$\\alpha\$", "\$\\theta\$", "\$\\sigma^2\$"],
+                  [αθ_Q2iii_SA.minimizer αθ_Q2iii.minimizer],
+                  "%4.4f")
+write("cls.tex", clsout)
 
 
 ## (Optimal) GMM
@@ -164,4 +192,14 @@ Optim.optimize(J,[0.5,0.5], BFGS())
 
 J_opt(theta) = g([theta[1],theta[2]], Π).' * inv(W_oGMM(αθ_Q2iiiGMM[1], Π)) * g([theta[1],theta[2]],Π)
 αθ_Q2iiiGMMopt = newtonRaphson(J_opt, [0.5,0.5],1e-12,1e5)
-Optim.optimize(J_opt,[0.5,0.5], BFGS(), Optim.Options(g_tol = 1e-12))
+sigma = var(errorARMA(αθ_Q2iiiGMMopt[1], Π))
+append!(αθ_Q2iiiGMMopt[1], sigma)
+
+αθ_Q2iiiGMMopt_Optim = Optim.optimize(J_opt,[0.5,0.5], LBFGS(), Optim.Options(g_tol = 1e-12))
+sigma_Optim = var(errorARMA(αθ_Q2iiiGMMopt[1], Π))
+append!(αθ_Q2iiiGMMopt_Optim.minimizer, sigma_Optim)
+
+gmmout = textable(["\$\\alpha\$", "\$\\theta\$", "\$\\sigma^2\$"],
+                  [αθ_Q2iiiGMMopt[1] αθ_Q2iiiGMMopt_Optim.minimizer],
+                  "%4.4f")
+write("ogmm.tex", gmmout)
