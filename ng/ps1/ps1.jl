@@ -16,7 +16,7 @@ end
 N = 500
 x = genLambdaInvCDF(rand(N,1), 0, -1, -0.0075, -0.03)
 
-sk = skewness(x)
+sk = skewness(x) + 3 ## pretty sure julia kurtosis is excess. 
 ku = kurtosis(x)
 
 # Bera-Jarque Test
@@ -25,12 +25,12 @@ jb = (N/6)*(sk^2 + (1/4)*(ku-3)^2)
 
 # Internet says JB is chi-squared(2). So, what level do we reject at?
 #α = 100*(1-cdf(Chisq(2), jb))
-α = 100*(1-cdf(Chisq(2), 0.01))
+α = quantile(Chisq(2), 0.95)
 #jbout = string("The Bera-Jarque statistic was $jb; this means "
 #             "we can reject the null at the $α\% level, since Bera-Jarque "
 #             "is distributed \$\Chi^2\_2\$"))
 #write("jb.tex", jbout)
-jbout = textable(["mean", "variance", "skewness", "kurtosis", "Bera-Jarque", "1\\% Critical Value"],
+jbout = textable(["mean", "variance", "skewness", "kurtosis", "Bera-Jarque", "5\\% Critical Value"],
          [mean(x), var(x), sk, ku, jb, α], ["%4.4f", "%4.4f", "%4.2f", "%4.2f", "%4.2f", "%4.2f"])
 write("jb.tex", jbout)         
 
@@ -122,7 +122,7 @@ end
 m_obj(αθ) = m(αθ, y)
 g_obj!(grad, αθ) = g!(grad, αθ, y)
 θhat_2 = Optim.optimize(m_obj, g_obj!, [0.5,0.5], LBFGS())
-sigma = var(errorARMA(θhat_2.minimizer, Π))
+sigma = var(errorARMA(θhat_2.minimizer, y))
 append!(θhat_2.minimizer, sigma)
 nlsout = textable(["\$\\alpha\$", "\$\\theta\$", "\$\\sigma^2\$"], θhat_2.minimizer,
                   "%4.4f")
