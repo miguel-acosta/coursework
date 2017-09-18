@@ -16,8 +16,8 @@ end
 N = 500
 x = genLambdaInvCDF(rand(N,1), 0, -1, -0.0075, -0.03)
 
-sk = skewness(x) + 3 ## pretty sure julia kurtosis is excess. 
-ku = kurtosis(x)
+sk = skewness(x) 
+ku = kurtosis(x) + 3 ## pretty sure julia kurtosis is excess. 
 
 # Bera-Jarque Test
 jb = (N/6)*(sk^2 + (1/4)*(ku-3)^2)
