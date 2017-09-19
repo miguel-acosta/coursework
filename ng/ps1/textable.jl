@@ -1,5 +1,21 @@
+## Creates the inside of a table that can be imported into tex.
+## If no filename is given, returns the string to be printed.
+## 
+## Inputs
+##   labels    : A string array of row labels
+##   data      : Data to be printed to the table
+##   precision : Either a string describing the format of every
+##               element in the table, or a table of such strings,
+##               the same size as 'data', specifying a format
+##               for each variable
+##   fname     : The name of the output file
+
+## Note: I did nothing to check for bad inputs... So you get out
+##       what you put in. Also, this doesn't yet support column
+##       names. 
+
 using Formatting
-function textable(labels, data, precision = "%.2g")
+function textable(labels, data, precision = "%.2g", fname = "")
     outstr = ""
 
     ## Get information about size of table 
@@ -30,6 +46,13 @@ function textable(labels, data, precision = "%.2g")
         end
         outstr = string(outstr, linesep)
     end
+
+
+    ## Write to a file if you want. 
+    if fname != ""
+        write(string(fname, ".tex"), outstr)
+    end
+
     return(outstr)
 end
 
