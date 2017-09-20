@@ -76,7 +76,8 @@ write("nls.tex", nlsout)
 σ = sqrt(0.05)
 e = zeros(N)
 y = zeros(N)
-e[2:N] = randn(N-1,1) * σ
+randns = randn(N-1,1)
+e[2:N] = randns * σ
 for tt in 2:N
     y[tt] = α * y[tt-1] + e[tt] + θ * e[tt-1]
 end
@@ -127,6 +128,38 @@ append!(θhat_2.minimizer, sigma)
 nlsout = textable(["\$\\alpha\$", "\$\\theta\$", "\$\\sigma^2\$"], θhat_2.minimizer,
                   "%4.4f")
 write("nls2.tex", nlsout)
+
+#------------------------------------------------------------------------------#
+#----------------------------------- Q2.ii -------------------------------------#
+#------------------------------------------------------------------------------#
+θt = 1/θ
+σt = σ * θ
+et = zeros(N)
+yt = zeros(N)
+et[2:N] = randns * σt
+for tt in 2:N
+    yt[tt] = α * yt[tt-1] + et[tt] + θt * et[tt-1]
+end
+
+m_obj_equiv(αθ) = m(αθ, yt)
+g_obj_equiv!(grad, αθ) = g!(grad, αθ, yt)
+θhat_2_equiv = Optim.optimize(m_obj_equiv, g_obj_equiv!, [0.5,0.5], LBFGS())
+sigma_equiv = var(errorARMA(θhat_2_equiv.minimizer, yt))
+append!(θhat_2_equiv.minimizer, sigma_equiv)
+nlsout = textable(["\$\\alpha\$", "\$\\theta\$", "\$\\sigma^2\$"], θhat_2_equiv.minimizer,
+                  "%4.4f")
+write("nls2_equiv.tex", nlsout)
+
+
+covy  = cov(y[2:end], y[1:end-1])
+covyt = cov(yt[2:end], yt[1:end-1])
+vy    = cov(y[2:end], y[2:end])
+vyt   = cov(yt[2:end], yt[2:end])
+nlsout_equiv = textable(["\$\\gamma\_0\$", "\$\\gamma\_1\$"], [vy vyt; covy covyt],
+                        "%4.4f")
+write("nls2_equiv_ac.tex", nlsout_equiv)
+
+
 
 #------------------------------------------------------------------------------#
 #----------------------------------- Q2.iii -----------------------------------#

@@ -6,6 +6,8 @@
     "jb"
     "nls"
     "nls2"
+    "nls2_equiv"
+    "nls2_equiv_ac"
     "cls"
     "ogmm"
     "article"
