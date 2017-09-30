@@ -21,7 +21,7 @@ end
 ##----------------------------------------------------------------------------##
 function plotts(y, name, snames)
     f = figure(figsize = (4.5, 4.5))
-    plot(1:length(y), repmat([0],length(y),1), color = "black", linewidth = 1)    
+    plot(1:length(y), repmat([0],length(y),1), color = "black", linewidth = 1) 
     for ii = 1:length(snames)
         plot(1:size(y)[1], y[:,ii], linewidth = 2,label=snames[ii])
     end
@@ -57,9 +57,9 @@ function g(αθ,data)
     θ     = αθ[2]
     σ2    = var(error)
     TT    = length(data)
-    yt    = data[3:end]
-    ytm1  = data[2:end-1]
-    ytm2  = data[1:end-2]
+    yt    = data[3:end]-mean(data)
+    ytm1  = data[2:end-1]-mean(data)
+    ytm2  = data[1:end-2]-mean(data)
     γ0    = σ2 * (2*α*θ+θ^2+1)/(1-α^2)
     γ1    = σ2 * (α^2*θ + θ^2*α+θ+α)/(1-α^2)
     γ2    = α * γ1
@@ -84,6 +84,7 @@ function W_oGMM(αθ,data)
     γ0    = σ2 * (2*α*θ+θ^2+1)/(1-α^2)
     γ1    = σ2 * (α^2*θ + θ^2*α+θ+α)/(1-α^2)
     γ2    = α * γ1
+    data  = copy(data)-mean(data)
     for tt = 3:TT
         g_i   = [data[tt]^2          - γ0;
                  data[tt]*data[tt-1] - γ1;
@@ -117,6 +118,7 @@ function g_mom(αθ,data)
     k2     = σ2 * (2*α*θ+θ^2+1)/(1-α^2)
     k3     = 0
     k4     = kappa4(α, θ, sqrt(σ2), TT)
+    data   = copy(data)-mean(data)
     barg   = [sum(data.^2    - k2);
               sum(data.^3    - k3);
               sum(data.^4    - k4)]/TT
@@ -151,11 +153,118 @@ end
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
+function g_mom_ac(αθ,data)
+    error  = errorARMA(αθ,data)
+    α      = αθ[1]
+    θ      = αθ[2]
+    σ2     = var(error)
+    TT     = length(data)
+    k2     = σ2 * (2*α*θ+θ^2+1)/(1-α^2)
+    k3     = 0
+    k4     = kappa4(α, θ, sqrt(σ2), TT)[3:end]
+    γ1    = σ2 * (α^2*θ + θ^2*α+θ+α)/(1-α^2)
+    γ2    = α * γ1
+    meand = mean(data[3:end])
+    yt    = data[3:end]-meand
+    ytm1  = data[2:end-1]-meand
+    ytm2  = data[1:end-2]-meand
+    data  = data[3:end]-meand
+    barg   = [sum(data.^2    - k2);
+              sum(data.^3    - k3);
+              sum(data.^4    - k4);
+              sum(yt.*ytm1   - γ1);
+              sum(yt.*ytm2   - γ2)]/(TT-3)
+    return(barg)
+end
+
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+function W_oGMM_mom_ac(αθ,data)
+    error = errorARMA(αθ,data)
+    TT = length(data)
+    gbar = g_mom_ac(αθ,data)
+    Ωhat = zeros(length(gbar),length(gbar))    
+    α     = αθ[1]
+    θ     = αθ[2]
+    σ2    = var(error)
+    k2     = σ2 * (2*α*θ+θ^2+1)/(1-α^2)
+    k3     = 0
+    k4     = kappa4(α, θ, sqrt(σ2), TT)
+    meand  = mean(data)
+    γ1    = σ2 * (α^2*θ + θ^2*α+θ+α)/(1-α^2)
+    γ2    = α * γ1    
+    for tt = 3:TT
+        g_i   = [(data[tt]-meand)^2 - k2;
+                 (data[tt]-meand)^3 - k3;
+                 (data[tt]-meand)^4 - k4[tt]
+                 (data[tt]-meand)*(data[tt-1]-meand) - γ1;
+                 (data[tt]-meand)*(data[tt-2]-meand) - γ2]
+        Ωhat  = copy(Ωhat) + g_i * (g_i.') - gbar * (gbar.')
+    end
+    return (Ωhat/(TT-3))
+end
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+function g_mom_ac_no3(αθ,data)
+    error  = errorARMA(αθ,data)
+    α      = αθ[1]
+    θ      = αθ[2]
+    σ2     = var(error)
+    TT     = length(data)
+    k2     = σ2 * (2*α*θ+θ^2+1)/(1-α^2)
+    k4     = kappa4(α, θ, sqrt(σ2), TT)[3:end]
+    γ1    = σ2 * (α^2*θ + θ^2*α+θ+α)/(1-α^2)
+    γ2    = α * γ1
+    meand = mean(data[3:end])
+    yt    = data[3:end]-meand
+    ytm1  = data[2:end-1]-meand
+    ytm2  = data[1:end-2]-meand
+    data  = data[3:end]-meand
+    barg   = [sum(data.^2    - k2);
+              sum(data.^4    - k4);
+              sum(yt.*ytm1   - γ1);
+              sum(yt.*ytm2   - γ2)]/(TT-3)
+    return(barg)
+end
+
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+function W_oGMM_mom_ac_no3(αθ,data)
+    error = errorARMA(αθ,data)
+    TT = length(data)
+    gbar = g_mom_ac_no3(αθ,data)
+    Ωhat = zeros(length(gbar),length(gbar))    
+    α     = αθ[1]
+    θ     = αθ[2]
+    σ2    = var(error)
+    k2    = σ2 * (2*α*θ+θ^2+1)/(1-α^2)
+    k4    = kappa4(α, θ, sqrt(σ2), TT)
+    meand = mean(data)
+    γ1    = σ2 * (α^2*θ + θ^2*α+θ+α)/(1-α^2)
+    γ2    = α * γ1    
+    for tt = 3:TT
+        g_i   = [(data[tt]-meand)^2 - k2;
+                 (data[tt]-meand)^4 - k4[tt]
+                 (data[tt]-meand)*(data[tt-1]-meand) - γ1;
+                 (data[tt]-meand)*(data[tt-2]-meand) - γ2]
+        Ωhat  = copy(Ωhat) + g_i * (g_i.') - gbar * (gbar.')
+    end
+    return (Ωhat/(TT-3))
+end
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
 function oGMM(objective, vcov, data, start)
     ## First, get GMM vcov matrix using identity weighting
     J(theta) = objective(theta, data).' * objective(theta,data)
     αθgmm = Optim.optimize(J,start, BFGS()).minimizer
-    
     J_opt(theta) = objective(theta, data).' * inv(vcov(αθgmm, data)) * objective(theta,data)
     αθogmm = Optim.optimize(J_opt,start, LBFGS(), Optim.Options(g_tol = 1e-12))
     sigma  = var(errorARMA(αθogmm.minimizer, data))
@@ -204,6 +313,24 @@ function HACse(y,x,β,q)
     return(sqrt.(diag(V)), V)
 end
 
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+function gbarMD(αθσ2, ϕ1ϕ2σ2hat)
+    α  = αθσ2[1]
+    θ  = αθσ2[2]
+    σ2 = αθσ2[3]
+
+    ϕ1  = α + θ
+    ϕ2  = - α * θ
+    σ2v = σ2 * (1+θ^4)
+
+    return([ϕ1 ϕ2 σ2v] - ϕ1ϕ2σ2hat)
+end
+
+    
+
+    
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
@@ -278,10 +405,27 @@ textable(["\$\\alpha\$", "\$\\beta\$", "\$\\sigma^2\$"],
 ##----------------------------------------------------------------------------##
 αθogmm_mom = oGMM(g_mom, W_oGMM_mom, y, [0.8, 0.5])
 
-
 textable(["\$\\alpha\$", "\$\\beta\$", "\$\\sigma^2\$"],
          αθogmm_mom,
          precision = "%4.4f", fname = "ogmm_mom")
+
+##----------------------------------------------------------------------------##
+##---------------------------- GMM: centered moments + autocorr --------------##
+##----------------------------------------------------------------------------##
+αθogmm_mom_ac = oGMM(g_mom_ac, W_oGMM_mom_ac, y, [0.8, 0.5])
+
+textable(["\$\\alpha\$", "\$\\beta\$", "\$\\sigma^2\$"],
+         αθogmm_mom_ac,
+         precision = "%4.4f", fname = "ogmm_mom_ac")
+
+##----------------------------------------------------------------------------##
+##-----------------GMM: centered moments + autocorr, no 3rd moment -----------##
+##----------------------------------------------------------------------------##
+αθogmm_mom_ac_no3 = oGMM(g_mom_ac_no3, W_oGMM_mom_ac_no3, y, [0.8, 0.5])
+
+textable(["\$\\alpha\$", "\$\\beta\$", "\$\\sigma^2\$"],
+         αθogmm_mom_ac_no3,
+         precision = "%4.4f", fname = "ogmm_mom_ac_no3")
 
 
 ##----------------------------------------------------------------------------##
@@ -289,6 +433,7 @@ textable(["\$\\alpha\$", "\$\\beta\$", "\$\\sigma^2\$"],
 ##----------------------------------------------------------------------------##
 X     = [y[2:end-1] y[1:end-2]]
 βols  = (X.' * X)\X.' * y[3:end]
+σ2v   = sum((y[3:end] - X * βols).^2)/(length(y)-2) #variance of the errors
 SEols = HACse(y[3:end], X, βols, 5)[1]
 ϕ1    = sum(βols)
 ϕ1se  = sqrt.([1 1] * HACse(y[3:end], X, βols, 5)[2] * [1;1])
@@ -309,11 +454,15 @@ textable(["\$\\alpha\$", "\$\\beta\$", "\$\\sigma^2\$"],
 ##---------------------------- Auxiliary Model: MD ---------------------------##
 ##----------------------------------------------------------------------------##
 # I don't know what this means............. 
-
+J_auxMD(αθσ2) = sum(gbarMD(αθσ2,[βols[1] βols[2] σ2v]).^2)
+αθσ_auxMD = Optim.optimize(J_auxMD,[0.8, 0.5, 0.5], BFGS())
+textable(["\$\\alpha\$", "\$\\beta\$", "\$\\sigma^2\$"],
+         αθσ_auxMD.minimizer,
+         precision = "%4.4f", fname = "aux_md")
 
 ##----------------------------------------------------------------------------##
 ##---------------------------- SMM -------------------------------------------##
-##----------------------------------------------------------------------------##    
+##----------------------------------------------------------------------------##
 S  = 501
 TT = 500
 shocks = randn(TT-1, S)
