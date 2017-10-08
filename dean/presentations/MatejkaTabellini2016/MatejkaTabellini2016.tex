@@ -1,0 +1,197 @@
+%% LyX 2.2.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{beamer}
+\usepackage[utf8x]{inputenc}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\usepackage{amstext}
+\usepackage{esint}
+\usecolortheme{dove}
+%\usetheme{Ilmenau}
+%\usefonttheme{structurebold}
+
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>
+    \frametitle{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\usepackage[english]{babel}
+\usepackage{dsfont}
+\newtheorem{prop}{Proposition}
+\title[]{\large Electoral Competition with 
+  Rationally Inattentive Voters}
+\subtitle{Mat\v{e}jka and Tabellini}
+\author{Miguel Acosta}
+\institute{Columbia University \& USA }
+\date{October 2017}
+
+
+
+\begin{document}
+\begin{frame}
+\titlepage 
+\end{frame}
+
+\section{Introduction}
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+\begin{frame}{Questions} 
+Voters are uninformed, oftentimes predictably so. 
+\begin{itemize}
+\item{\color{red}\bf How does selective ignorance of voters interact with 
+  policy formation by politicians?}
+\item How can the observed patterns of what voters know be 
+  explained?
+\item How does the knowledge of voters depend on the political 
+  process? 
+\item How do the patterns in voters' information influence 
+  policy choices by elected representatives?
+\end{itemize}
+\end{frame}
+
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+\begin{frame}{Preview of Results}
+Using a model of rationally-inattentive voters (facing costly 
+information acquisition) and politicians that care \emph{only} about 
+winning, the authors draw numerous conclusions.
+\begin{itemize}
+\item Distortions in policies arise because, in equilibrium, candidates 
+  maximize ``perceived social welfare,'' 
+  (which relates to how much attention is paid to various policies), rather
+  than actual social welfare.
+\item More attentive voters are more influential, because they are more 
+  responsive to policy changes. Candidates therefore have higher incentives
+  to appeal to these groups. 
+\item Voters are more attentive to issues that (1) are less costly to learn
+  about (2) that are more uncertain or that (3) would provide relatively
+  large increases in marginal utility. 
+\item $\Rightarrow$ Small groups, extreme preferences, divisive issues 
+  receive more attention. Public goods don't. Efficient reforms are more
+  likely in recessions and the poor are politically empowered by 
+  welfare reforms.
+\end{itemize}
+\end{frame}
+
+\section{Model}
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+\begin{frame}{Candidates}
+Two candidates, indexed by $C$, maximize the probability of winning the election. 
+\begin{itemize}
+\item Choose an $M$ dimensional policy vector $\hat q_C$. 
+\item The actual policy, $q_c$ is implemented 
+  imperfectly:  $q_C = \hat q_C + e_C$. 
+\end{itemize}
+\end{frame}
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+\begin{frame}{Voters}
+$N$ voters receive ($2\times M$) {\color{red}iid} signals about the policy vectors. 
+\begin{itemize}
+\item Choose how much attention to pay to the signals by choosing the noise of
+  each signal.\footnote{Choose the $2M$ elements of 
+    $\xi^G_C\equiv \frac{\sigma_C}{\sigma^2_C+\gamma_C^G}$\\}
+\item Cost of attention is a weighted sum (over policies) of the relative 
+  reduction of uncertainty
+  that the signal provides (difference in entropy). 
+\item Chooses candidate $A$ if 
+\[\mathbb{E}[U^G(q_A)\mid s_A^{v,G}] - \mathbb{E}[U^G(q_A)\mid s_A^{v,G}]
+\geq x^v\] where $x^v$ is a preference shock favoring candidate $B$, 
+consisting of a idiosyncratic and common component. 
+\item Solves $\max_{\text{info}}\mathbb{E}\left[\max_{\text{candidate}}\mathbb{E}E\left[U^G(q_C)\mid s_C^{v,G}\right]\right] -\text{info cost}$
+\end{itemize}
+
+
+\end{frame}
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+\begin{frame}{Timing}
+  \begin{enumerate}
+  \item Voters form priors about platforms and choose attention 
+  \item Candidates set target policy. 
+  \item Actual policies  realize. 
+  \item Voters observe noisy signals of actual platforms
+  \item Preference shock realizes and elections are held. 
+  \end{enumerate}
+\end{frame}
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+\begin{frame}{Equilibrium}
+\textbf{Information and policies such that everyone maximizes utility.}
+
+\begin{itemize}
+ \item Distortions in policies arise because, in equilibrium, candidates 
+  maximize ``perceived social welfare,'' 
+  (which relates to how much attention is paid to various policies), rather
+  than actual social welfare.
+\item Voters are more attentive to issues that (1) are less costly to learn
+  about (2) that are more uncertain or that (3) would provide relatively
+  large increases in marginal utility. 
+\end{itemize}
+\end{frame}
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+\begin{frame}{Critiques}
+  \begin{itemize}
+  \item Signals received by voters are independent. 
+  \item Voters vote as if they are pivotal. 
+    \begin{itemize}
+    \item Get utility from choosing the right person... ``sincere attention'' and 
+      ``voting for the right candidate''
+    \item Has nothing to do with who wins.
+    \item ``Weight'' in information cost captures the cost of attention relative
+      to the psychological benefit of voting for the right candidate.
+    \end{itemize}
+  \item Idiosyncratic shock being drawn late implies all voters of same group
+    choose same attention strategies. 
+  \end{itemize}
+
+\end{frame}
+
+\section{Applications \& Conclusion}
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+\begin{frame}{Applications}
+  \begin{itemize}
+  \item \textbf{Single policy dimension.} Rational inattention amplifies the 
+    effect of preference utility and dampens the effect of group size on 
+    outcomes.
+    \item \textbf{Multi-dimensional policy.} Voters pay more attention to higher
+      stakes. Common-ground policies receive less attention
+      (expect it to prevail). 
+    \item \textbf{Policy affects the cost of attention.} Welfare policies 
+      increase make attention less costly for the poor $\Rightarrow$ poor
+      pay more attention $\Rightarrow$ more welfare policies. 
+  \end{itemize}
+\end{frame}
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+%%----------------------------------------------------------------------------%%
+\begin{frame}{Conclusion}
+  \begin{itemize}
+  \item Useful model which can be specialized to study several aspects of 
+    elections. 
+  \item The rational inattention yields several previous results, from first
+    principles. 
+  \end{itemize}
+\end{frame}
+
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
