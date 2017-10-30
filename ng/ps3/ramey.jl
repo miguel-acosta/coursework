@@ -1,4 +1,4 @@
-using ExcelReaders, TimeSeries, IterableTables, DataFrames
+using ExcelReaders, TimeSeries, IterableTables, DataFrames, PyPlot
 include("../jllib/getFred.jl")
 include("VARfuncs.jl")
 """ 
@@ -11,42 +11,36 @@ and M1.
 """
 
 ##  Pull in FRED Data
-IP   = log.(getFred("INDPRO",freq = "m"))
-UR   =      getFred("UNRATE",freq = "m")
-CPI  = log.(getFred("CPIAUCSL",freq = "m"))
-FF   =      getFred("FEDFUNDS",freq = "m")
-NBR  = log.(getFred("BOGNONBR",freq = "m")[Date(1959,1,1):Date(2007,12,31)])
-TR   = log.(getFred("RESBALNS",freq = "m"))
-M1   = log.(getFred("M1SL",freq = "m"))
+##IP   = log.(getFred("INDPRO",freq = "m"))
+##UR   =      getFred("UNRATE",freq = "m")
+##CPI  = log.(getFred("CPIAUCSL",freq = "m"))
+##FF   =      getFred("FEDFUNDS",freq = "m")
+##NBR  = log.(getFred("BOGNONBR",freq = "m")[Date(1959,1,1):Date(2007,12,31)])
+##TR   = log.(getFred("RESBALNS",freq = "m"))
+##M1   = log.(getFred("M1SL",freq = "m"))
 
 ## Commodity prices from Ramey's database
-ramey   = readxl(DataFrame, "Ramey_HOM_monetary/Monetarydat.xlsx", "Monthly!A1:I682", header= true)
-LPCOM   = ramey[:LPCOM]
-nonNA   = maximum(!isna(LPCOM) .* collect(1:length(LPCOM)))
-LPCOM   = Array(LPCOM[1:nonNA])
-rameyD  = Date.(Date(ramey[:DATES][1],1,1):Dates.Month(1):Date(2100,1,1))[1:nonNA]
-COMMODITY = TimeArray(rameyD, LPCOM)
-
-## Merge
-all = merge(IP, merge(UR, merge(CPI, merge(COMMODITY, merge(FF, merge(NBR, merge(TR, M1)))))),
-            colnames = ["IP", "UR", "CPI", "COMMODITY", "FF", "NBR", "TR", "M1"])
+ramey   = readxl(DataFrame, "Ramey_HOM_monetary/Monetarydat.xlsx", "Monthly!A1:AP682", header= true)
+ramey[:DATE] = Date(ramey[:DATES][1],1,1):Dates.Month(1):Date(2015,9,1)
+ramey = ramey[ramey[:DATE] .<= Date(2007,12,1),:]
+ramey = ramey[:,[:DATE, :LIP, :UNEMP, :LCPI, :LPCOM , :FFR, :lnbr, :ltr, :lm1]]
 
 ## Trim samples for CEE replication 
-dataSamp1 = DataFrame(all[Date(1965,6,1):Date(1995,6,1)])[2:end]
-dataSamp2 = DataFrame(all[Date(1983,1,1):Date(2007,12,1)])[2:end]
-dataSamp3 = DataFrame(all[Date(1983,1,1):Date(2007,12,1)])[[:IP,:UR,:CPI,:COMMODITY,:FF]]
+dataSamp1 = ramey[(ramey[:DATE] .>= Date(1964,1,1)) & (ramey[:DATE] .<= Date(1995,6,1) ),:][2:end]
+dataSamp2 = ramey[(ramey[:DATE] .>= Date(1982,1,1)) & (ramey[:DATE] .<= Date(2007,12,1)),:][2:end]
+dataSamp3 = ramey[(ramey[:DATE] .>= Date(1982,1,1)) & (ramey[:DATE] .<= Date(2007,12,1)),:][2:end][[:LIP,:UNEMP,:LCPI,:LPCOM,:FFR]]
 
 ## Estimate VARs. 12 lags. It was not easy to figure out that 12 lags were used... 
 Aols1,μols1,Σols1,resids1 = VARols(12, dataSamp1)
 Aols2,μols2,Σols2,resids2 = VARols(12, dataSamp2)
-Aols3,μols3,Σols3,resids1 = VARols(12, dataSamp3)
+Aols3,μols3,Σols3,resids3 = VARols(12, dataSamp3)
 
 ## Get the choleskies and triangulars
 function LDL(X)
     Pchol = chol(X).'
     S  = diagm(diag(Pchol))
     D  = S^2
-    L  = X * inv(S)
+    L  = Pchol * inv(S)
     return(L,D)
 end
 P1 = chol(Σols1).'
@@ -66,7 +60,7 @@ function IRFcee(irf,ID, vnames)
     for ii = 1:length(vnames)
         f = figure(figsize = (4,4))
         plot(1:Tirf, repmat([0],Tirf,1), color = "black", linewidth = 1)        
-        plot(1:Tirf, irf1[ii,:], linewidth = 2)
+        plot(1:Tirf, irf[ii,:], linewidth = 2)
         title(vnames[ii])
         savefig(string("cee", ID, "_", vnames[ii], ".pdf"))
         close()

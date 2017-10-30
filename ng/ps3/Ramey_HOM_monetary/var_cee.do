@@ -15,7 +15,7 @@ drop _all;
 clear all;
 
 set more 1;
-set matsize 1000;
+set matsize 800;
 set mem 400m;
 
 capture log close;
@@ -51,7 +51,7 @@ tsset mdate, m;
 *******************************************************************************;
 
 var lip unemp lcpi lpcom ffr lnbr ltr lm1 if mdate>=m(1965m1) & mdate<=m(1995m6), lags(1/12) level(90); 
-
+asdfasdf
 irf create irf, step(48) bs reps(500) set(cee, replace);
 irf table oirf, impulse(ffr) response(lip unemp lcpi lpcom ffr lnbr ltr lm1) level(90);
 irf graph oirf, impulse(ffr) response(ffr lip lcpi unemp) byopts(rescale) level(90);
