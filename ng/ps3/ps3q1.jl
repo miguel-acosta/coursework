@@ -1,103 +1,13 @@
 include("../jllib/getFred.jl")
-using IterableTables, DataFrames, PyPlot
-
+include("../jllib/textable.jl")
+include("VARfuncs.jl")
+using IterableTables, DataFrames, PyPlot, HypothesisTests
+    
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
-function VARols(P, variables)
-    V        = length(variables)
-    TT       = length(variables[1])
-    A        = zeros(V,V,P)
-    μ        = zeros(V,1)
-
-    for depvar = 1:V
-        ## Get y variable
-        y = variables[depvar][(P+1):TT]
-
-        ## Create x matrix
-        X = zeros(TT-P, P*V+1)
-        X[:,1] = 1
-        col = 2
-        for pp = 1:P
-            for vv = 1:V
-                x = variables[vv]
-                X[:,col] = x[(P-pp+1):(TT-pp)]
-                col += 1
-            end
-        end
-        β = (X.' * X) \ X.' * y
-        μ[depvar] = β[1]
-
-        for pp = 1:P
-            inds = (V*(pp-1) + 2):(V*(pp) + 1)
-            print(inds)
-            A[depvar,:,pp] = β[inds]
-        end
-    end
-        return(A, μ)
-end
-
-##----------------------------------------------------------------------------##
-##----------------------------------------------------------------------------##
-##----------------------------------------------------------------------------##
-function moments(Y)
-    LY = Y[1:(end-1),:]
-    Y  = Y[2:end,:]
-    TT = size(Y)[1]
-
-    EY = repmat(mean(Y,1), TT,1)
-    print(size(Y))
-    print(size(EY))
-    Γ0 = (Y-EY).' * (Y-EY) /TT
-    Γ1 = (Y-EY).' * (LY-EY) /TT
-    return EY[1,:], Γ0, Γ1
-end
-
-##----------------------------------------------------------------------------##
-##----------------------------------------------------------------------------##
-##----------------------------------------------------------------------------##
-function VMA(A,μ,j,shock)
-    N = length(μ)
-    P = size(A)[3]
-    Y = zeros(N, j)
-    Y[:,1] = shock # + μ
-    for jj = 2:j
-        y = zeros(N,1) #μ
-        for kk = max(1,jj-P):(jj-1)
-#            print(string(kk, "--", jj-kk,"\n"))
-            y += A[:,:,(jj-kk)] * Y[:,kk]
-        end
-        Y[:,jj] = y
-    end
-#    Y += repmat(μ,1,j)
-    return(Y)
-end
-
-##----------------------------------------------------------------------------##
-##----------------------------------------------------------------------------##
-##----------------------------------------------------------------------------##
-function plotts(y, name, snames)
-    N = size(y)[2]
-    T = size(y)[1]    
-    print(N)
-    f = figure(figsize = (12,4))
-    for ii = 1:length(snames)
-        subplot(100 + N*10 + ii)
-        plot(1:T, repmat([0],T,1), color = "black", linewidth = 1)
-        plot(1:T, y[:,ii], linewidth = 2,label=snames[ii])
-        xlim(0,T)
-        xlabel("t")
-        ylabel(snames[ii])        
-    end
-    savefig(string(name,".pdf"))
-    close(f)
-end
-
-##----------------------------------------------------------------------------##
-##----------------------------------------------------------------------------##
-##----------------------------------------------------------------------------##
-## ESTIMATE THE VAR
-gdp = getFred("GDP",freq = "q")
+## SET UP DATA
+gdp = getFred("GDPC1",freq = "q")
 M3  = getFred("MABMM301USM189S",freq = "q", agg = mean)
 FF  = getFred("FEDFUNDS",freq = "q", agg = mean)
 
@@ -108,23 +18,155 @@ T      = size(Y)[1]
 Y[2:T,1] = 400*(log.(Y[2:T,1]) - log.(Y[1:(T-1),1]))
 Y[2:T,2] = 400*(log.(Y[2:T,2]) - log.(Y[1:(T-1),2]))
 Y = Y[2:T,:]
+plotts(Y, "data", ["GDP", "M3", "FF"])
 
-Aols,μols = VARols(2,Y)
+n  = size(Y)[2]
+P  = 2
+T  = size(Y)[1]
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+## ESTIMATE THE VAR
+Aols,μols,Σols,resids = VARols(P,Y)
+textable([], μols, "%.2g", "MUols")
+textable([], Aols[:,:,1], "%.2g", "A1ols")
+textable([], Aols[:,:,2], "%.2g", "A2ols")
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+## Stability
+M,C = companion(Aols,μols)
+textable([], abs.(eig(C)[1]).', "%.2g", "eigenA")
 
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 ## Compute moments
 μ, Γ0, Γ1 = moments(Array(Y))
-
+textable([], μ, "%.2g", "muY")
+textable([], Γ0, "%.2g", "g0Y")
+textable([], Γ1, "%.2g", "g1Y")
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 ## MA Representation 
-Φ = VMA(Aols,μols,100,[0,0,1])
-plotts(Φ.', "shockFFR", ["GDP", "M3", "FFR"])
-Φ = VMA(Aols,μols,100,[0.01,0,0])
-plotts(Φ.', "shockM3", ["GDP", "M3", "FFR"])
-Φ = VMA(Aols,μols,100,[0.01,0,0])
-plotts(Φ.', "shockGDP", ["GDP", "M3", "FFR"])
+plotts(IRF(Aols,μols,100,[0,0,1]).',
+       "shockFFR", ["Δ GDP", "Δ M3", "FFR"])
+plotts(IRF(Aols,μols,100,[0,1,0]).',
+       "shockM3", ["Δ GDP", "Δ M3", "FFR"])
+plotts(IRF(Aols,μols,100,[1,0,0]).',
+       "shockGDP", ["Δ GDP", "Δ M3", "FFR"])
 
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+## AIC and BIC
+K = n
+pmax = 8
+
+Σ(m)   = VARols(m,Y;chop=(pmax-m))[3]
+AIC(m) = log(det(Σ(m))) + (2/T) * (m * K^2 + K)
+BIC(m) = log(det(Σ(m))) + (log(T)/T) * (m * K^2 + K)
+
+AICall = [AIC(m) for m in 1:pmax]
+BICall = [BIC(m) for m in 1:pmax]
+BICmin = findmin(BICall)[2]
+AICmin = findmin(AICall)[2]
+
+textable([], AICall.', "%.2g", "AICall")
+textable([], BICall.', "%.2g", "BICall")
+write(string("AICmin.tex"), string(AICmin))
+write(string("BICmin.tex"), string(BICmin))
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+## ESTIMATE THE VARS TWO OTHER WAYS, THEN COMPARE COEFFICIENTS
+LY = lagmatrix(Y,2)
+YY = LY[:,1:K].'
+XX = [LY[:,K+1:end] ones(T-P,1)].'
+
+Π = YY * XX.' * inv(XX * XX.')
+π = kron((XX * XX.')\ XX ,eye(K)) * vec(YY)
+
+[[vec(reshape(Aols,K,K*P));μols] vec(Π) π] ## Looks good!
+textable([], Π, "%.2g", "PIhat")
+textable([], π, "%.2g", "pihat")
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+## GET DATA BACK BY SIMULATING WITH COMPANION MATRIX
+diffSim = maximum(abs.(Array(Y[3:end,:]) - simulateVAR(Y,K,P,C,M, resids)))
+write(string("diffSim.tex"), string(diffSim))
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+## FORECAST DATA
+fcast = zeros(100,3)
+for aa = 1:100
+    fcast[aa,:] = forecast(aa, Aols, μols, resids)
+end
+plotts([Array(Y) ;fcast], "forecast", ["GDP", "M3", "FFR"])
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+## PREDICTION ERROR COVARIANCE
+Yvar  = zeros(12,3)
+M3var = zeros(12,3)
+FFvar = zeros(12,3)
+for h = 1:12
+    fev        = FEV(Aols,μols,h)[2]
+    Yvar[h,:]  = fev[1,:]
+    M3var[h,:] = fev[2,:]
+    FFvar[h,:] = fev[3,:]    
+end
+
+plotFEV("GDP", Yvar) 
+plotFEV("M3" , M3var)
+plotFEV("FF" , FFvar)
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+## BOOTRSTRAPPING IRFS A LA RUNKLE
+b025, t975 = runkle(Y, Aols, μols, resids, K, P, 499, 40)
+
+irf = IRF(Aols,μols,40,[1,0,0]).'
+plotts([b025[:,1,1] irf[:,1] t975[:,1,1]], "IRF_gdp_gdp", ["b025", "irf", "t975"];sub=false,dims=(4,4))
+plotts([b025[:,2,1] irf[:,2] t975[:,2,1]], "IRF_gdp_m3",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
+plotts([b025[:,3,1] irf[:,3] t975[:,3,1]], "IRF_gdp_ff",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
+
+irf = IRF(Aols,μols,40,[0,1,0]).'
+plotts([b025[:,1,2] irf[:,1] t975[:,1,2]], "IRF_m3_gdp", ["b025", "irf", "t975"];sub=false,dims=(4,4))
+plotts([b025[:,2,2] irf[:,2] t975[:,2,2]], "IRF_m3_m3",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
+plotts([b025[:,3,2] irf[:,3] t975[:,3,2]], "IRF_m3_ff",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
+
+irf = IRF(Aols,μols,40,[0,0,1]).'
+plotts([b025[:,1,3] irf[:,1] t975[:,1,3]], "IRF_ff_gdp", ["b025", "irf", "t975"];sub=false,dims=(4,4))
+plotts([b025[:,2,3] irf[:,2] t975[:,2,3]], "IRF_ff_m3",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
+plotts([b025[:,3,3] irf[:,3] t975[:,3,3]], "IRF_ff_ff",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
+
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+## AR(2) for GDP
+Lgdp = lagmatrix(Y[1],2)
+ygdp = Lgdp[:,1]
+Xgdp = [ones(size(Lgdp)[1],1) Lgdp[:,2:end]]
+βgdp = (Xgdp.' * Xgdp)\Xgdp.' * ygdp
+egdp = ygdp - Xgdp * βgdp
+μgdp = βgdp[1]
+Agdp = reshape(βgdp[2:end],1,1,2)
+
+fcast_gdp_1_ar2 = [forecast(1,Agdp,μgdp,egdp[1:tt])[1] for tt in 1:length(egdp)]
+ar2_fcast_error_1 = fcast_gdp_1_ar2[1:end-1] - Y[1][3:end-1]
+
+fcast_gdp_1_var   = [forecast(1,Aols,μols,resids[1:tt,:])[1] for tt in 1:size(resids)[1]]
+var_fcast_error_1 = fcast_gdp_1_var[1:end-1] - Y[1][3:end-1]
+plotts([var_fcast_error_1 ar2_fcast_error_1], "fcast_error_gdp",  ["VAR(2)", "AR(2)"];sub=false)
+
+TTf = length(var_fcast_error_1)
+pval = pvalue(UnequalVarianceTTest(var_fcast_error_1, ar2_fcast_error_1))
+write(string("pvalYfcast.tex"), string(pval))
