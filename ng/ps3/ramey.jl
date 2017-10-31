@@ -67,8 +67,10 @@ function IRFcee(irf,ID, vnames)
     end
 end
 
-
+b025, t975 = runkle(dataSamp1, Aols1, μols1, resids1, length(μols1), 12, 499, 48)
 
 IRFcee(irf1, 1, ["IP", "UR", "CPI", "COMMODITY", "FF", "NBR", "TR", "M1"])
 IRFcee(irf2, 2, ["IP", "UR", "CPI", "COMMODITY", "FF", "NBR", "TR", "M1"])
 IRFcee(irf3, 3, ["IP", "UR", "CPI", "COMMODITY", "FF"])
+
+

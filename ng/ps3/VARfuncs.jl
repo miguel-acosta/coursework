@@ -109,21 +109,31 @@ end
 ##----------------------------------------------------------------------------##
 function plotts(y, name, snames;sub=true,
                 units = repmat(["Percent"],length(snames),1),
-                dims = (12,4))
+                dims = (12,4), TITLE = "", LEGEND=false)
     N = size(y)[2]
     T = size(y)[1]    
     f = figure(figsize = dims)
+    LINESTYLES = repmat(["-", "--", ":"], 1,3)
+    COLORS = repmat(["black", "gray"], 1,3)    
     for ii = 1:length(snames)
         if sub
             subplot(100 + N*10 + ii)
         end
         plot(1:T, repmat([0],T,1), color = "black", linewidth = 1)
-        plot(1:T, y[:,ii], linewidth = 2,label=snames[ii])
+        plot(1:T, y[:,ii], linewidth = 2,label=snames[ii],color=COLORS[ii],
+             linestyle=LINESTYLES[ii])
         xlim(0,T)
         xlabel("t")
         title(snames[ii])
         ylabel(units[ii])        
     end
+    if length(TITLE) > 0
+        title(TITLE)
+    end
+    if LEGEND
+        legend()
+    end
+    
     savefig(string(name,".pdf"))
     close(f)
     close()
@@ -156,7 +166,7 @@ function simulateVAR(Y,k,p,companion, mean, resids)
     TT = size(LAGS)[1]
     Ysim = zeros(TT,k)
     for tt = 1:TT
-        fcast = M + C * LAGS[tt,:] + [resids[tt,:]; zeros(K*(p-1))]
+        fcast = M + C * LAGS[tt,:] + [resids[tt,:]; zeros(k*(p-1))]
         Ysim[tt,:] = fcast[1:k]
         LY = lagmatrix([Y[1:p,:] ;Ysim],p)
         LAGS = LY[:,k+1:end]
@@ -204,8 +214,12 @@ end
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 function plotFEV(vname, fev)
-    f = figure(figsize = (4,4))
-    stackplot(1:12, fev.', colors = ["mediumspringgreen", "midnightblue", "m"])
+    f=figure(figsize = (4,4))
+    stacks = stackplot(1:12, fev.', colors = ["mediumspringgreen", "midnightblue", "m"])
+    hatches=["/", "*", "o"]
+    for ii in 1:length(stacks)
+        stacks[ii][:set_hatch](hatches[ii])
+    end
     legend(["GDP", "M3", "FF"],loc="lower right")
     PyPlot.title(string("Forecast Error Variance Decomposition: ", vname))
     savefig(string("FEV", vname, ".pdf"))
@@ -218,7 +232,7 @@ end
 ##----------------------------------------------------------------------------##
 function runkle(Y, A, μ, resids, k, p, nbs, tirf)
     TT    = size(resids)[1]
-    C,M   = companion(A,μ)
+    M,C   = companion(A,μ)
     IRFbs = zeros(tirf,k,nbs,k)
     for ss = 1:nbs
         ## Draw sample
@@ -243,4 +257,27 @@ function runkle(Y, A, μ, resids, k, p, nbs, tirf)
         end
     end
     return(IRFbs025, IRFbs975)
+end
+
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+function plotIRF(y, vname, fname, ;units="Percent", CIlow = [], CIhigh=[],Clevel=95)
+    T = size(y)[1]    
+    f = figure(figsize = (4,4))
+    plot(1:T, repmat([0],T,1), color = "black", linewidth = 1)
+    plot(1:T, y, linewidth = 2, label=vname)
+    if length(CIlow)>0
+        fill_between(1:T, CIlow, CIhigh, facecolor="gray",
+                     alpha=0.5,label=string(Clevel, "% CI"))
+    end
+    xlim(0,T)
+    xlabel("t")
+    title(vname)
+    ylabel(units)
+    legend()
+    savefig(string(fname,".pdf"))
+    close(f)
+    close()
 end

@@ -126,6 +126,11 @@ plotFEV("GDP", Yvar)
 plotFEV("M3" , M3var)
 plotFEV("FF" , FFvar)
 
+fevINF   = FEV(Aols,μols,10000)[2]
+textable(["Variance of \$\\Delta\$ GDP","Variance of \$\\Delta\$ M3",
+          "Variance of FF"],
+          fevINF, "%.2g", "FEVLR")
+
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
@@ -133,20 +138,20 @@ plotFEV("FF" , FFvar)
 b025, t975 = runkle(Y, Aols, μols, resids, K, P, 499, 40)
 
 irf = IRF(Aols,μols,40,[1,0,0]).'
-plotts([b025[:,1,1] irf[:,1] t975[:,1,1]], "IRF_gdp_gdp", ["b025", "irf", "t975"];sub=false,dims=(4,4))
-plotts([b025[:,2,1] irf[:,2] t975[:,2,1]], "IRF_gdp_m3",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
-plotts([b025[:,3,1] irf[:,3] t975[:,3,1]], "IRF_gdp_ff",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
+plotIRF(irf[:,1], "Δ GDP", "IRF_gdp_gdp",CIlow = b025[:,1,1], CIhigh=t975[:,1,1],Clevel=95)
+plotIRF(irf[:,2], "Δ M3" , "IRF_gdp_m3" ,CIlow = b025[:,2,1], CIhigh=t975[:,2,1],Clevel=95)
+plotIRF(irf[:,3], "FF"   , "IRF_gdp_ff" ,CIlow = b025[:,3,1], CIhigh=t975[:,3,1],Clevel=95)
 
 irf = IRF(Aols,μols,40,[0,1,0]).'
-plotts([b025[:,1,2] irf[:,1] t975[:,1,2]], "IRF_m3_gdp", ["b025", "irf", "t975"];sub=false,dims=(4,4))
-plotts([b025[:,2,2] irf[:,2] t975[:,2,2]], "IRF_m3_m3",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
-plotts([b025[:,3,2] irf[:,3] t975[:,3,2]], "IRF_m3_ff",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
+plotIRF(irf[:,1], "Δ GDP", "IRF_m3_gdp",CIlow = b025[:,1,2], CIhigh=t975[:,1,2],Clevel=95)
+plotIRF(irf[:,2], "Δ M3" , "IRF_m3_m3" ,CIlow = b025[:,2,2], CIhigh=t975[:,2,2],Clevel=95)
+plotIRF(irf[:,3], "FF"   , "IRF_m3_ff" ,CIlow = b025[:,3,2], CIhigh=t975[:,3,2],Clevel=95)
+
 
 irf = IRF(Aols,μols,40,[0,0,1]).'
-plotts([b025[:,1,3] irf[:,1] t975[:,1,3]], "IRF_ff_gdp", ["b025", "irf", "t975"];sub=false,dims=(4,4))
-plotts([b025[:,2,3] irf[:,2] t975[:,2,3]], "IRF_ff_m3",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
-plotts([b025[:,3,3] irf[:,3] t975[:,3,3]], "IRF_ff_ff",  ["b025", "irf", "t975"];sub=false,dims=(4,4))
-
+plotIRF(irf[:,1], "Δ GDP", "IRF_ff_gdp",CIlow = b025[:,1,3], CIhigh=t975[:,1,3],Clevel=95)
+plotIRF(irf[:,2], "Δ M3" , "IRF_ff_m3" ,CIlow = b025[:,2,3], CIhigh=t975[:,2,3],Clevel=95)
+plotIRF(irf[:,3], "FF"   , "IRF_ff_ff" ,CIlow = b025[:,3,3], CIhigh=t975[:,3,3],Clevel=95)
 
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
@@ -165,7 +170,8 @@ ar2_fcast_error_1 = fcast_gdp_1_ar2[1:end-1] - Y[1][3:end-1]
 
 fcast_gdp_1_var   = [forecast(1,Aols,μols,resids[1:tt,:])[1] for tt in 1:size(resids)[1]]
 var_fcast_error_1 = fcast_gdp_1_var[1:end-1] - Y[1][3:end-1]
-plotts([var_fcast_error_1 ar2_fcast_error_1], "fcast_error_gdp",  ["VAR(2)", "AR(2)"];sub=false)
+plotts([var_fcast_error_1 ar2_fcast_error_1], "fcast_error_gdp",  ["VAR(2)", "AR(2)"];sub=false, LEGEND=true,
+       TITLE = "One-period-ahead Forecast Errors for GDP")
 
 TTf = length(var_fcast_error_1)
 pval = pvalue(UnequalVarianceTTest(var_fcast_error_1, ar2_fcast_error_1))
