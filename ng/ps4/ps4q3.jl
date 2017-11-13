@@ -27,16 +27,16 @@ end
 nde200,niter200   = drawNormDubExp(200)
 nde10000,niter10000 = drawNormDubExp(10000)
 
-write("dubExpAccept.tex", string(niter200))
+write("output/dubExpAccept.tex", string(niter200))
 PyPlot.plt[:hist](nde200,50,normed = true,color="dodgerblue")
 title("200 Normal draws: Accept/Reject Double Exponential")
-savefig("q3i.pdf")
+savefig("output/q3i.pdf")
 close()
 
-write("dubExpAcceptBig.tex", string(niter10000))
+write("output/dubExpAcceptBig.tex", string(niter10000))
 PyPlot.plt[:hist](nde10000,100,normed = true,color="maroon")
 title("10,000 Normal draws: Accept/Reject Double Exponential")
-savefig("q3iBig.pdf")
+savefig("output/q3iBig.pdf")
 close()
 
 
@@ -92,16 +92,16 @@ Ndraws = 1000
 ## Brute Force
 drawsBF, niterBF = drawTruncNormBF(Ndraws,μbar)
 PyPlot.plt[:hist](drawsBF,75,normed = true,color="darkcyan")
-write("q3iiBF.tex", string(niterBF))
+write("output/q3iiBF.tex", string(niterBF))
 title("1000 Truncated Normal Draws: Brute Force")
-savefig("q3iiBF.pdf")
+savefig("output/q3iiBF.pdf")
 close()
 
 ## The old fashined way: Inverse CDF
 drawsCDF         = drawTruncNormICDF(Ndraws,μbar)
 PyPlot.plt[:hist](drawsCDF,75,normed = true,color="red")
 title("1000 Truncated Normal Draws: Inverse CDF")
-savefig("q3iiICDF.pdf")
+savefig("output/q3iiICDF.pdf")
 close()
 
 ### Accept reject
@@ -121,15 +121,15 @@ plot(θgrid, f(θgrid)./(M*g(θgrid)),label = "f/Mg")
 plot(θgrid, M*g(θgrid),label = "Mg")
 xlabel("θ")
 legend()
-savefig("q3iiifg.pdf")
+savefig("output/q3iiifg.pdf")
 close()
 
 ## Do the drawing: 
 drawsAR,niterAR = drawTruncNormAR(Ndraws,μbar)
-write("q3iiAR.tex", string(niterAR))
+write("output/q3iiAR.tex", string(niterAR))
 PyPlot.plt[:hist](drawsAR,75,normed = true,color="red")
 title("1000 Truncated Normal Draws: Accept-Reject")
-savefig("q3iiIAR.pdf")
+savefig("output/q3iiIAR.pdf")
 close()
 ##----------------------------------------------------------------------------##
 ## Question 3, part 3
@@ -169,10 +169,10 @@ plot(draws[:,1],draws[:,2],".",color = "lightcoral")
 title("1000 Bivariate Normal Draws: MCMC")
 xlabel(L"$\theta_1$")
 ylabel(L"$\theta_2$")
-savefig("q3iii.pdf")
+savefig("output/q3iii.pdf")
 close()
 
-write("q3iii.tex",
+write("output/q3iii.tex",
       string("I set \$\\sigma\_1 = ", σ1, "\$, ",
              "\$\\sigma\_2 = ", σ2, "\$, ",
              "\$\\gamma = ", γ, "\$, ",

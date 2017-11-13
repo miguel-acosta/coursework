@@ -32,7 +32,7 @@ y = x*β + e
 
 l(b) = -sum((y-x*b).^2)
 plotdist(0:0.001:2, l.(0:0.001:2))
-savefig("q2i.pdf")
+savefig("output/q2i.pdf")
 close()
 
 ##----------------------------------------------------------------------------##
@@ -46,7 +46,7 @@ l2(θ) = sum(yb5)*log(θ) + sum(n-yb5)*log(1-θ)
 plotdist(0.01:0.001:.99, l1.(0.01:0.001:.99),label="θ=0.2")
 plotdist(0.01:0.001:.99, l2.(0.01:0.001:.99),label="θ=0.5")
 legend()
-savefig("q2ii.pdf")
+savefig("output/q2ii.pdf")
 close()
 
 
@@ -57,7 +57,7 @@ l3(NN) = log(nck(NN,s)) + s*log(θ) + (NN-s) * log(1-θ)
 ngrid = collect(7:1:30)
 l3eval = l3.(ngrid)
 plotdist(ngrid, l3eval,xlab = "n")
-savefig("q2iiN.pdf")
+savefig("output/q2iiN.pdf")
 close()
 
 
@@ -74,5 +74,5 @@ plotdist(θgrid,postConj.(θgrid,1,1),mode=true,label="Conjugate, 1")
 plotdist(θgrid,postConj.(θgrid,3,3),mode=true,label="Conjugate, 3")
 plotdist(θgrid,postJeff.(θgrid),mode=true,label="Jeffrey's")
 legend()
-savefig("q2iii.pdf")
+savefig("output/q2iii.pdf")
 close()
