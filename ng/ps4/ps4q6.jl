@@ -54,8 +54,8 @@ function qbe(objective, b, DATA; burn = 2e4, maxit = burn + 2e4,
         store[jj,:] = b
 
         ## Update variance
-        if (jj % 200) == 0
-            ratio = naccept/ns
+        if (jj % updateFreq) == 0
+            ratio = naccept/updateFreq
             for ii in 1:npar
                 vm[ii] = ratio[ii] > .6 ? vm[ii]*(1+c[ii]*((ratio[ii]-.6)/.4)) : vm[ii]
                 vm[ii] = ratio[ii] < .6 ? vm[ii]/(1+c[ii]*((.4-ratio[ii])/.4)) : vm[ii]
