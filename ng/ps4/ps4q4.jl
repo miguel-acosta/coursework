@@ -2,7 +2,7 @@ using Distributions, PyPlot
 include("../jllib/textable.jl")
 srand(6413)
 
-dat = readdlm("probit.dat")
+dat = readdlm("input/probit.dat")
 y = dat[:,1]
 X = [ones(y) dat[:,2]]
 

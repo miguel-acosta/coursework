@@ -66,8 +66,8 @@ close()
 ##----------------------------------------------------------------------------##
 n = 5
 s = 2
-postConj(θ,a,b) = (a-1+s) * log(θ) + (b-1+n-s) * log(1-θ)
-postJeff(θ)     = s*log(θ) + (n-s) * log(1-θ) + log(sqrt(1/θ + 1/(1-θ)))
+postConj(θ,a,b) = θ^(a-1+s)  *  (1-θ)^(b-1+n-s)
+postJeff(θ)     = θ^s * (1-θ)^(n-s) * sqrt(1/θ + 1/(1-θ))
 
 θgrid = 0.01:0.001:0.99
 plotdist(θgrid,postConj.(θgrid,1,1),mode=true,label="Conjugate, 1")

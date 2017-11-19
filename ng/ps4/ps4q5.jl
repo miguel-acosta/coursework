@@ -26,7 +26,7 @@ function post(βprior, Vprior, vprior, s2prior)
 end
 
 
-## Find posterior: NG
+## Find posterior: Normal Gamma
 βpost, varβpost = post([0,1], eye(2), 1,1)
 
 ## Find posterior: Flat
