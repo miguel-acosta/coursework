@@ -1,4 +1,5 @@
-function summary(α,t100,t098,t090)
+include("../jllib/textable.jl")
+function summaryPlots(α,t100,t098,t090)
     ## Plot the distribution of α
     KDEαOLS = kde(α[:,1])
     KDEαGLS = kde(α[:,2])
@@ -54,4 +55,18 @@ function summary(α,t100,t098,t090)
         close()            
     end
 
+end
+
+function critval(t100, t098, t090, suffix; GLS = true)
+    tsims = [t100, t098, t090]
+    tnames = ["1.00", "0.98", "0.90"]
+    critOLS = zeros(3)
+    critGLS = zeros(3)    
+    for tt in 1:length(tsims)
+        critOLS[tt] = quantile(abs.(tsims[tt][:,1]),0.05)
+        critGLS[tt] = quantile(abs.(tsims[tt][:,2]),0.05)
+    end
+
+    dataOut = GLS ? [critOLS critGLS] : critOLS
+    textable(tnames, dataOut; precision = "%.4g", fname = string("output/tdist_", suffix))
 end
