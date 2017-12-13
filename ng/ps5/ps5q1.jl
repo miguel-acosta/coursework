@@ -1,6 +1,11 @@
 include("../jllib/TSfun.jl")
+include("../jllib/summaryPlots.jl")
 using Distributions, PyPlot, KernelDensity
 srand(6413)
+
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
 function ols(y,X; β0 = 0, cons = true, trend = false)
     TT = length(y)
     if cons & trend
@@ -15,6 +20,9 @@ function ols(y,X; β0 = 0, cons = true, trend = false)
     return(β, se, t, Σ)
 end
 
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
 function GLSdetrend(y; trend = true)
     TT     = length(y)
     ytilde = copy(y)
@@ -33,6 +41,9 @@ function GLSdetrend(y; trend = true)
     return(yd)
 end
 
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
 function buildY(TT)
     e = rand(Normal(0,1),TT)
     y = zeros(TT)
@@ -42,12 +53,14 @@ function buildY(TT)
     return(y)
 end
 
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
 function sim(TT)
     y    = buildY(TT)
     yd   = GLSdetrend(y)
     Ly   = lagmatrix(y,1)
     Lyd  = lagmatrix(yd,1)
-    Xols = [ones(TT-1) 1:(TT-1) Ly[:,2]]
     
     αols  = ols(Ly[:,1],  Ly[:,2],  cons = true,  trend = true,  β0 = 1)[1][3]
     αgls  = ols(Lyd[:,1], Lyd[:,2], cons = false, trend = false, β0 = 1)[1][1]
@@ -64,6 +77,9 @@ function sim(TT)
     return(αols,αgls,t1ols,t1gls,t9ols,t9gls,t98ols,t98gls)    
 end
 
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
 function sims(nsim)
     α    = zeros(nsim,2)
     t100 = zeros(nsim,2)
@@ -79,63 +95,8 @@ function sims(nsim)
     return(α, t100, t098, t090)
 end
 
-function summary(α,t100,t098,t090)
-    ## Plot the distribution of α
-    KDEαOLS = kde(α[:,1])
-    KDEαGLS = kde(α[:,2])
-    plot(KDEαOLS.x, KDEαOLS.density/sum(KDEαOLS.density), label = "OLS")
-    plot(KDEαGLS.x, KDEαGLS.density/sum(KDEαGLS.density), label = "GLS")
-    xlabel("α")
-    legend()
-    title(string("Distribution of α"))
-    savefig("output/alph.pdf")
-    close()
-
-    ## Plot the distribution of t-statistics for the various
-    ## tests: OLS
-    tsims = [t100, t098, t090]
-    tnames = ["1", "0.98", "0.90"]
-    for tt in 1:length(tsims)
-        KDEtOLS = kde(tsims[tt][:,1])
-        plot(KDEtOLS.x, KDEtOLS.density/sum(KDEtOLS.density),
-             label = string("OLS, α = ", tnames[tt]))
-    end
-    xlabel("t")
-    legend()
-    title(string("Distribution of t-stats: OLS"))
-    savefig("output/tOLS.pdf")
-    close()
-
-    ## Plot the distribution of t-statistics for the various
-    ## tests: OLS
-    for tt in 1:length(tsims)
-        KDEtGLS = kde(tsims[tt][:,2])
-        plot(KDEtGLS.x, KDEtGLS.density/sum(KDEtGLS.density),
-             label = string("GLS, α = ", tnames[tt]))        
-    end
-    xlabel("t")
-    legend()
-    title(string("Distribution of t-stats: GLS"))
-    savefig("output/tGLS.pdf")
-    close()
-
-    ## Plot the distribution of t-statistics for the various
-    ## tests: OLS and GLS
-    for tt in 1:length(tsims)
-        KDEtOLS = kde(tsims[tt][:,1])
-        KDEtGLS = kde(tsims[tt][:,2])
-        plot(KDEtOLS.x, KDEtOLS.density/sum(KDEtOLS.density),
-             label = string("OLS, α = ", tnames[tt]))
-        plot(KDEtGLS.x, KDEtGLS.density/sum(KDEtGLS.density),
-             label = string("GLS, α = ", tnames[tt]))
-        xlabel("t")
-        legend()
-        title(string("Distribution of t-stats"))
-        savefig(string("output/t", tnames[tt], ".pdf"))
-        close()            
-    end
-
-end
-
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
+##----------------------------------------------------------------------------##
 α, t100, t098, t090 = sims(20000)
-summary(α, t100, t098, t090)
+summaryPlots(α, t100, t098, t090)
