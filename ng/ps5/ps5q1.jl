@@ -17,10 +17,6 @@ function ols(y,X; β0 = 0, cons = true, trend = false, trendbreak = false)
     end
     β  = (X.' * X)\ X.' * y
     Σ  = inv((X.' * X)) *  (sum((y - X * β).^2) / length(y))
-#    print("hey")
-#    print(X)
-#    print(length(size(X)) == 1 ? sqrt(inv((X.' * X))) : (diag(inv((X.' * X)))))
-#    print("\n")
     se = length(size(X)) == 1 ? sqrt(Σ) : sqrt.(diag(Σ))
     t = (β-β0)./se
     return(β, se, t, Σ)

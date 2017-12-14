@@ -1,6 +1,6 @@
 using Distributions, PyPlot, KernelDensity
+include("../jllib/textable.jl")
 
-srand(6413)
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
 ##----------------------------------------------------------------------------##
@@ -57,7 +57,7 @@ function finiteSampleDistribution(ϕ, part; NN=10000, TT=200)
     γdist = zeros(NN)
     βdist = zeros(NN)
     for nn in 1:NN
-        γsamp, βsamp = sampleCoefficients(ϕ, TT)
+        γsamp, βsamp = sampleCoefficients(ϕ, TT, part)
         γdist[nn] = γsamp
         βdist[nn] = βsamp
     end
@@ -70,10 +70,14 @@ end
 ##----------------------------------------------------------------------------##
 ##----------------------------- PART I ---------------------------------------##
 ##----------------------------------------------------------------------------##
-for ϕi in [0.8, 0.9, 0.95, 0.99, 1]
+ϕs = [0.8, 0.9, 0.95, 0.99, 1]
+means = zeros(length(ϕs),2)
+for ii in 1:length(ϕs)
+    ϕi = ϕs[ii]
     meanγ, meanβ, xγ,yγ, xβ, yβ = finiteSampleDistribution(ϕi,1)
+    means[ii,:] = [meanγ, meanβ]
     ## Plot β
-    plot(xβ,yβ/sum(yβ),label = string("ϕ = ", ϕi))
+    plot(xβ,yβ,label = string("ϕ = ", ϕi))
 
 end
 xlabel("β")
@@ -81,11 +85,12 @@ legend()
 title(string("Distribution of β"))
 savefig("output/bet_kde_1.pdf")
 close()
+textable(ϕs, means; precision = "%.4g", fname = "output/meanGamBet_I")
 
-for ϕi in [0.8, 0.9, 0.95, 0.99, 1]
+for ϕi in ϕs
     meanγ, meanβ, xγ,yγ, xβ, yβ = finiteSampleDistribution(ϕi,1)
     ## Plot γ
-    plot(xγ,yγ/sum(yγ),label = string("ϕ = ", ϕi))
+    plot(xγ,yγ,label = string("ϕ = ", ϕi))
 end
 xlabel("γ")
 legend()
@@ -96,21 +101,26 @@ close()
 ##----------------------------------------------------------------------------##
 ##----------------------------- PART II --------------------------------------##
 ##----------------------------------------------------------------------------##
-for ϕi in [-0.8, 0.8]
+ϕs = [-0.8, 0.8]
+means_II = zeros(length(ϕs),2)
+for ii in 1:length(ϕs)
+    ϕi = ϕs[ii]
     meanγ, meanβ, xγ,yγ, xβ, yβ = finiteSampleDistribution(ϕi,2)
+    means_II[ii,:] = [meanγ, meanβ]
     ## Plot β
-    plot(xβ,yβ/sum(yβ),label = string("ϕ = ", ϕi))
+    plot(xβ,yβ,label = string("ϕ = ", ϕi))
 end
 xlabel("β")
 legend()
 title(string("Distribution of β"))
 savefig("output/bet_kde_2.pdf")
 close()
+textable(ϕs, means_II; precision = "%.4g", fname = "output/meanGamBet_II")
 
 for ϕi in [-0.8, 0.8]
     meanγ, meanβ, xγ,yγ, xβ, yβ = finiteSampleDistribution(ϕi,2)
     ## Plot β
-    plot(xγ,yγ/sum(yγ),label = string("ϕ = ", ϕi))
+    plot(xγ,yγ,label = string("ϕ = ", ϕi))
 end
 xlabel("γ")
 legend()
