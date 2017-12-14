@@ -131,7 +131,8 @@ srand(6413)
 summaryPlots(α, t100, t098, t090)
 
 ## Part b
-critval(t100, t098, t090, "a"; GLS = true)
+cv = critval(t100, t098, t090, "a"; GLS = true)
+power(cv, [t098[:,1] t090[:,1]], ["0.98", "0.90"], "b")
 
 ## Part c
 srand(6413)
@@ -140,5 +141,6 @@ critval(t100_c, t098_c, t090_c, "c"; GLS = false)
 
 ## Part d
 srand(6413)
-α_d, t100_d, t098_d, t090_d = sims(NSIM, tbreak = 75, realTbreak = true)
+α_d, t100_d, t098_d, t090_d = sims(NSIM, tbreak = false, realTbreak = true)
 critval(t100_d, t098_d, t090_d, "d"; GLS = false)
+power(cv, t100_d[1,:], [""], "d")

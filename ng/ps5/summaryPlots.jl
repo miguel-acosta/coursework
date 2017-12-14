@@ -58,15 +58,25 @@ function summaryPlots(α,t100,t098,t090)
 end
 
 function critval(t100, t098, t090, suffix; GLS = true)
-    tsims = [t100, t098, t090]
-    tnames = ["1.00", "0.98", "0.90"]
-    critOLS = zeros(3)
-    critGLS = zeros(3)    
+#    tsims = [t100, t098, t090]
+#    tnames = ["1.00", "0.98", "0.90"]
+    tsims = [t100]
+    tnames = ["1"]
+    critOLS = zeros(length(tsims))
+    critGLS = zeros(length(tsims))    
     for tt in 1:length(tsims)
         critOLS[tt] = quantile(abs.(tsims[tt][:,1]),0.05)
         critGLS[tt] = quantile(abs.(tsims[tt][:,2]),0.05)
     end
 
     dataOut = GLS ? [critOLS critGLS] : critOLS
+    print(dataOut)
     textable(tnames, dataOut; precision = "%.4g", fname = string("output/tdist_", suffix))
+    return(critOLS[1])
+end
+
+function power(cv, tvals, labels, suffix)
+    power = sum(abs.(tvals) .> tvals,1)/ length(tvals)
+    print(power)
+    textable(labels, power.'; precision = "%.4g", fname = string("output/power_", suffix))
 end
