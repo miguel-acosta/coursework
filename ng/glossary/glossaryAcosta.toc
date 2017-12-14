@@ -35,7 +35,7 @@
 \contentsline {paragraph}{State-Space Representation}{4}{section*.32}
 \contentsline {paragraph}{Examples of state-space models}{4}{section*.33}
 \contentsline {paragraph}{Kalman Filter}{4}{section*.34}
-\contentsline {section}{\numberline {5}Bayesian Estimation}{4}{section.5}
+\contentsline {section}{\numberline {5}Bayesian and Quasi-Bayesian Estimation}{4}{section.5}
 \contentsline {paragraph}{Priors}{5}{section*.35}
 \contentsline {paragraph}{Bayes Rule}{5}{section*.36}
 \contentsline {paragraph}{Kernels}{5}{section*.37}
@@ -47,3 +47,18 @@
 \contentsline {paragraph}{Semi-conjugate prior}{5}{section*.43}
 \contentsline {paragraph}{BVAR}{5}{section*.44}
 \contentsline {paragraph}{EM}{5}{section*.45}
+\contentsline {paragraph}{Quasi-Bayesian Estimation}{5}{section*.46}
+\contentsline {section}{\numberline {6}Unit Roots}{6}{section.6}
+\contentsline {paragraph}{Superconsistency}{6}{section*.47}
+\contentsline {paragraph}{Terminology}{6}{section*.48}
+\contentsline {paragraph}{Beware}{6}{section*.49}
+\contentsline {paragraph}{Dickey-Fuller Tests}{6}{section*.50}
+\contentsline {paragraph}{Cointegration}{6}{section*.51}
+\contentsline {paragraph}{THE ``PRACTICAL RULES'' PORTION OF THE NOTES ARE VERY USEFUL}{6}{section*.52}
+\contentsline {section}{\numberline {7}The Spectrum}{6}{section.7}
+\contentsline {paragraph}{Spectral Decomposition}{6}{section*.53}
+\contentsline {paragraph}{Frequency}{6}{section*.54}
+\contentsline {paragraph}{Long-Run Variance}{6}{section*.55}
+\contentsline {paragraph}{Interesting Things}{6}{section*.56}
+\contentsline {paragraph}{Filtering}{6}{section*.57}
+\contentsline {paragraph}{Unit roots}{6}{section*.58}
